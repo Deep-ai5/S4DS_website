@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ALBUMS, GALLERY_ITEMS, type GalleryItem } from './galleryData';
+import './gallery.css';
 
 export function Gallery() {
   const [selectedAlbum, setSelectedAlbum] = useState<string>('all');
@@ -50,17 +51,17 @@ export function Gallery() {
   }, [selectedAlbum]);
 
   return (
-    <div className="relative min-h-screen bg-[#06141a] text-zinc-100 font-sans selection:bg-blue-600 selection:text-white pt-24 pb-28 px-4 sm:px-6 lg:px-8">
+    <div className="gallery-page relative min-h-screen bg-[#06141a] text-zinc-100 font-sans selection:bg-blue-600 selection:text-white pt-24 pb-28 px-4 sm:px-6 lg:px-8">
       {/* Background Decorative Gradients */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[750px] h-[450px] bg-gradient-to-b from-blue-600/15 via-emerald-600/10 to-transparent blur-3xl opacity-80" />
-        <div className="absolute top-1/3 -left-40 w-96 h-96 bg-cyan-600/10 blur-3xl rounded-full" />
-        <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-blue-700/10 blur-3xl rounded-full" />
+        <div className="gallery-glow gallery-glow--top absolute -top-40 left-1/2 w-[750px] h-[450px] bg-gradient-to-b from-blue-600/15 via-emerald-600/10 to-transparent blur-3xl opacity-80" />
+        <div className="gallery-glow gallery-glow--left absolute top-1/3 -left-40 w-96 h-96 bg-cyan-600/10 blur-3xl rounded-full" />
+        <div className="gallery-glow gallery-glow--right absolute bottom-1/4 -right-40 w-96 h-96 bg-blue-700/10 blur-3xl rounded-full" />
       </div>
 
       <div className="relative max-w-7xl mx-auto">
         {/* Header Section */}
-        <header className="text-center max-w-3xl mx-auto mb-12">
+        <header className="gallery-intro text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-950/80 border border-blue-500/30 text-blue-300 text-xs font-mono tracking-wider uppercase mb-5 backdrop-blur-md shadow-lg shadow-blue-950/50">
             <svg
               className="w-3.5 h-3.5 text-blue-400"
@@ -83,9 +84,9 @@ export function Gallery() {
           </h1>
 
           <p className="text-zinc-300 text-base sm:text-lg leading-relaxed font-['ArsenalSC',sans-serif] tracking-wide">
-            High-definition local photography from Even Semester 2026: Clash of Prompt, Analytrix
-            Datathon &amp; Conclave, and Zephyr Tech Days 1&ndash;3. Browse, filter, and inspect all
-            moments directly inside the website.
+            Curated event photography from Clash of Prompt, Analytrix Datathon &amp; Conclave, and
+            Zephyr Tech Days 1&ndash;3. Browse, filter, and inspect every moment directly inside the
+            website.
           </p>
 
           {/* TCET Capture Credits */}
@@ -119,40 +120,56 @@ export function Gallery() {
                 <div
                   key={album.key}
                   onClick={() => setSelectedAlbum(isSelected ? 'all' : album.key)}
-                  className={`group relative rounded-2xl overflow-hidden p-4 border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
+                  className={`gallery-album-card group relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
                     isSelected
                       ? 'bg-gradient-to-b from-blue-950/70 to-zinc-900 border-blue-500 shadow-xl shadow-blue-900/30 ring-1 ring-blue-500'
                       : 'bg-zinc-900/60 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/90'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-medium tracking-wide bg-blue-500/10 text-blue-300 border border-blue-500/20 mb-1.5">
-                        {album.category}
-                      </span>
-                      <h3 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors">
-                        {album.title}
-                      </h3>
-                      <p className="text-xs text-zinc-400 line-clamp-1">{album.subtitle}</p>
-                    </div>
-                    <span className="text-[11px] font-mono text-cyan-300 bg-cyan-950/60 px-2.5 py-1 rounded-md border border-cyan-800/60 shrink-0">
-                      {album.photoCount} Curated
-                    </span>
+                  <div className="gallery-album-cover relative h-36 overflow-hidden">
+                    <img
+                      src={
+                        GALLERY_ITEMS.find((photo) => photo.albumKey === album.key)?.rawUrl ??
+                        album.coverImage
+                      }
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#06141a] via-black/10 to-transparent" />
                   </div>
+                  <div className="p-4 pt-0">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div>
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-medium tracking-wide bg-blue-500/10 text-blue-300 border border-blue-500/20 mb-1.5">
+                          {album.category}
+                        </span>
+                        <h3 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors">
+                          {album.title}
+                        </h3>
+                        <p className="text-xs text-zinc-400 line-clamp-1">{album.subtitle}</p>
+                      </div>
+                      <span className="text-[11px] font-mono text-cyan-300 bg-cyan-950/60 px-2.5 py-1 rounded-md border border-cyan-800/60 shrink-0">
+                        {album.photoCount} Curated
+                      </span>
+                    </div>
 
-                  <p className="text-xs text-zinc-400 line-clamp-2 mb-4 leading-relaxed">
-                    {album.description}
-                  </p>
+                    <p className="text-xs text-zinc-400 line-clamp-2 mb-4 leading-relaxed">
+                      {album.description}
+                    </p>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 text-xs">
-                    <span
-                      className={`font-mono text-[11px] font-medium transition-colors ${
-                        isSelected ? 'text-blue-400 font-bold' : 'text-zinc-400 group-hover:text-white'
-                      }`}
-                    >
-                      {isSelected ? '✓ Filtered (Active)' : 'View Photos →'}
-                    </span>
-                    <span className="text-[11px] font-mono text-zinc-500">{album.date}</span>
+                    <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 text-xs">
+                      <span
+                        className={`font-mono text-[11px] font-medium transition-colors ${
+                          isSelected
+                            ? 'text-blue-400 font-bold'
+                            : 'text-zinc-400 group-hover:text-white'
+                        }`}
+                      >
+                        {isSelected ? '✓ Filtered (Active)' : 'View Photos →'}
+                      </span>
+                      <span className="text-[11px] font-mono text-zinc-500">{album.date}</span>
+                    </div>
                   </div>
                 </div>
               );
@@ -198,7 +215,9 @@ export function Gallery() {
                 type="button"
                 onClick={() => setViewMode('grid')}
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'grid' ? 'bg-zinc-800 text-white font-bold' : 'text-zinc-400 hover:text-white'
+                  viewMode === 'grid'
+                    ? 'bg-zinc-800 text-white font-bold'
+                    : 'text-zinc-400 hover:text-white'
                 }`}
               >
                 Grid View
@@ -207,7 +226,9 @@ export function Gallery() {
                 type="button"
                 onClick={() => setViewMode('storybooks')}
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'storybooks' ? 'bg-zinc-800 text-white font-bold' : 'text-zinc-400 hover:text-white'
+                  viewMode === 'storybooks'
+                    ? 'bg-zinc-800 text-white font-bold'
+                    : 'text-zinc-400 hover:text-white'
                 }`}
               >
                 Event Albums
@@ -240,16 +261,17 @@ export function Gallery() {
         {viewMode === 'grid' ? (
           <section>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPhotos.map((item) => (
+              {filteredPhotos.map((item, index) => (
                 <div
                   key={item.id}
                   onClick={() => setActivePhoto(item)}
-                  className="group relative rounded-2xl overflow-hidden bg-zinc-900/80 border border-zinc-800/80 shadow-lg hover:shadow-2xl hover:border-zinc-700 transition-all duration-300 cursor-pointer flex flex-col"
+                  style={{ animationDelay: `${Math.min(index * 45, 450)}ms` }}
+                  className="gallery-photo-card group relative rounded-2xl overflow-hidden bg-zinc-900/80 border border-zinc-800/80 shadow-lg hover:shadow-2xl hover:border-zinc-700 transition-all duration-300 cursor-pointer flex flex-col"
                 >
                   {/* Image Container with Aspect Ratio */}
                   <div className="relative w-full aspect-[4/3] bg-zinc-950 overflow-hidden">
                     <img
-                      src={item.image}
+                      src={item.rawUrl ?? item.image}
                       alt={item.title}
                       loading="lazy"
                       className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
@@ -320,7 +342,10 @@ export function Gallery() {
               (album) => {
                 const albumPhotos = GALLERY_ITEMS.filter((p) => p.albumKey === album.key);
                 return (
-                  <div key={album.key} className="p-6 sm:p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800">
+                  <div
+                    key={album.key}
+                    className="p-6 sm:p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800"
+                  >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-zinc-800/80">
                       <div>
                         <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-mono bg-blue-500/20 text-blue-300 border border-blue-500/30 mb-2">
@@ -341,10 +366,10 @@ export function Gallery() {
                         <div
                           key={photo.id}
                           onClick={() => setActivePhoto(photo)}
-                          className="group relative rounded-xl overflow-hidden aspect-[4/3] bg-zinc-950 border border-zinc-800/70 hover:border-zinc-600 transition-all cursor-pointer"
+                          className="gallery-photo-card group relative rounded-xl overflow-hidden aspect-[4/3] bg-zinc-950 border border-zinc-800/70 hover:border-zinc-600 transition-all cursor-pointer"
                         >
                           <img
-                            src={photo.image}
+                            src={photo.rawUrl ?? photo.image}
                             alt={photo.title}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -359,7 +384,7 @@ export function Gallery() {
                     </div>
                   </div>
                 );
-              }
+              },
             )}
           </section>
         )}
@@ -392,7 +417,7 @@ export function Gallery() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/92 backdrop-blur-2xl transition-opacity animate-in fade-in"
+          className="gallery-lightbox fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/92 backdrop-blur-2xl transition-opacity animate-in fade-in"
           onClick={() => setActivePhoto(null)}
         >
           {/* Modal Container */}
@@ -437,7 +462,7 @@ export function Gallery() {
             {/* Photo View with Navigation Chevrons */}
             <div className="relative flex-1 min-h-0 bg-black flex items-center justify-center p-2 sm:p-4 overflow-hidden">
               <img
-                src={activePhoto.image}
+                src={activePhoto.rawUrl ?? activePhoto.image}
                 alt={activePhoto.title}
                 className="max-h-[65vh] w-auto max-w-full object-contain rounded-lg"
               />
