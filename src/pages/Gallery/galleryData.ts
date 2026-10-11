@@ -92,6 +92,7 @@ export const ALBUMS: AlbumMeta[] = [
   },
 ];
 
+export const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: 1,
     title: 'Clash of Prompt - #01',
