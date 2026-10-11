@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ALBUMS, GALLERY_ITEMS, type GalleryItem } from './galleryData';
 import './gallery.css';
 
@@ -6,6 +7,15 @@ export function Gallery() {
   const [selectedAlbum, setSelectedAlbum] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'storybooks'>('grid');
   const [activePhoto, setActivePhoto] = useState<GalleryItem | null>(null);
+  const photosSectionRef = useRef<HTMLElement | null>(null);
+
+  const selectAlbum = useCallback((albumKey: string) => {
+    setSelectedAlbum(albumKey);
+    setViewMode('grid');
+    requestAnimationFrame(() => {
+      photosSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
 
   // Filter items
   const filteredPhotos = useMemo(() => {
@@ -35,13 +45,18 @@ export function Gallery() {
   // Keyboard navigation for lightbox
   useEffect(() => {
     if (!activePhoto) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setActivePhoto(null);
       else if (e.key === 'ArrowRight') showNext();
       else if (e.key === 'ArrowLeft') showPrev();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [activePhoto, showNext, showPrev]);
 
   // Active album details
@@ -101,82 +116,6 @@ export function Gallery() {
           </div>
         </header>
 
-        {/* Albums Showcase Grid */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              Event Albums ({ALBUMS.length})
-            </h2>
-            <span className="text-xs text-zinc-500 font-mono hidden sm:inline">
-              Click an album card below to filter instantly
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ALBUMS.map((album) => {
-              const isSelected = selectedAlbum === album.key;
-              return (
-                <div
-                  key={album.key}
-                  onClick={() => setSelectedAlbum(isSelected ? 'all' : album.key)}
-                  className={`gallery-album-card group relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
-                    isSelected
-                      ? 'bg-gradient-to-b from-blue-950/70 to-zinc-900 border-blue-500 shadow-xl shadow-blue-900/30 ring-1 ring-blue-500'
-                      : 'bg-zinc-900/60 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/90'
-                  }`}
-                >
-                  <div className="gallery-album-cover relative h-36 overflow-hidden">
-                    <img
-                      src={
-                        GALLERY_ITEMS.find((photo) => photo.albumKey === album.key)?.rawUrl ??
-                        album.coverImage
-                      }
-                      alt=""
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#06141a] via-black/10 to-transparent" />
-                  </div>
-                  <div className="p-4 pt-0">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div>
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-medium tracking-wide bg-blue-500/10 text-blue-300 border border-blue-500/20 mb-1.5">
-                          {album.category}
-                        </span>
-                        <h3 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors">
-                          {album.title}
-                        </h3>
-                        <p className="text-xs text-zinc-400 line-clamp-1">{album.subtitle}</p>
-                      </div>
-                      <span className="text-[11px] font-mono text-cyan-300 bg-cyan-950/60 px-2.5 py-1 rounded-md border border-cyan-800/60 shrink-0">
-                        {album.photoCount} Curated
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-zinc-400 line-clamp-2 mb-4 leading-relaxed">
-                      {album.description}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 text-xs">
-                      <span
-                        className={`font-mono text-[11px] font-medium transition-colors ${
-                          isSelected
-                            ? 'text-blue-400 font-bold'
-                            : 'text-zinc-400 group-hover:text-white'
-                        }`}
-                      >
-                        {isSelected ? '✓ Filtered (Active)' : 'View Photos →'}
-                      </span>
-                      <span className="text-[11px] font-mono text-zinc-500">{album.date}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
         {/* Filter & View Mode Toolbar */}
         <section className="sticky top-20 z-30 mb-8 py-3 bg-[#06141a]/90 backdrop-blur-xl border-y border-zinc-800/80">
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -184,7 +123,7 @@ export function Gallery() {
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               <button
                 type="button"
-                onClick={() => setSelectedAlbum('all')}
+                onClick={() => selectAlbum('all')}
                 className={`px-4 py-1.5 rounded-full text-xs font-mono font-medium transition-all shrink-0 cursor-pointer ${
                   selectedAlbum === 'all'
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
@@ -197,7 +136,7 @@ export function Gallery() {
                 <button
                   key={alb.key}
                   type="button"
-                  onClick={() => setSelectedAlbum(alb.key)}
+                  onClick={() => selectAlbum(alb.key)}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-medium transition-all shrink-0 cursor-pointer ${
                     selectedAlbum === alb.key
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
@@ -249,7 +188,7 @@ export function Gallery() {
             </div>
             <button
               type="button"
-              onClick={() => setSelectedAlbum('all')}
+              onClick={() => selectAlbum('all')}
               className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-mono border border-zinc-700 transition-colors shrink-0 cursor-pointer"
             >
               Clear Filter &times;
@@ -259,14 +198,16 @@ export function Gallery() {
 
         {/* Photos Grid or Storybook View */}
         {viewMode === 'grid' ? (
-          <section>
+          <section ref={photosSectionRef} className="gallery-photos-section">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredPhotos.map((item, index) => (
-                <div
+                <button
+                  type="button"
                   key={item.id}
                   onClick={() => setActivePhoto(item)}
+                  aria-label={`Open ${item.title}`}
                   style={{ animationDelay: `${Math.min(index * 45, 450)}ms` }}
-                  className="gallery-photo-card group relative rounded-2xl overflow-hidden bg-zinc-900/80 border border-zinc-800/80 shadow-lg hover:shadow-2xl hover:border-zinc-700 transition-all duration-300 cursor-pointer flex flex-col"
+                  className="gallery-photo-card group relative w-full text-left rounded-2xl overflow-hidden bg-zinc-900/80 border border-zinc-800/80 shadow-lg hover:shadow-2xl hover:border-zinc-700 transition-all duration-300 cursor-pointer flex flex-col"
                 >
                   {/* Image Container with Aspect Ratio */}
                   <div className="relative w-full aspect-[4/3] bg-zinc-950 overflow-hidden">
@@ -274,6 +215,10 @@ export function Gallery() {
                       src={item.rawUrl ?? item.image}
                       alt={item.title}
                       loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = item.image;
+                      }}
                       className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     />
                     {/* Top Badge */}
@@ -325,7 +270,7 @@ export function Gallery() {
                       </span>
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
 
@@ -363,15 +308,21 @@ export function Gallery() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       {albumPhotos.map((photo) => (
-                        <div
+                        <button
+                          type="button"
                           key={photo.id}
                           onClick={() => setActivePhoto(photo)}
-                          className="gallery-photo-card group relative rounded-xl overflow-hidden aspect-[4/3] bg-zinc-950 border border-zinc-800/70 hover:border-zinc-600 transition-all cursor-pointer"
+                          aria-label={`Open ${photo.title}`}
+                          className="gallery-photo-card group relative w-full text-left rounded-xl overflow-hidden aspect-[4/3] bg-zinc-950 border border-zinc-800/70 hover:border-zinc-600 transition-all cursor-pointer"
                         >
                           <img
                             src={photo.rawUrl ?? photo.image}
                             alt={photo.title}
                             loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.onerror = null;
+                              event.currentTarget.src = photo.image;
+                            }}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity p-2 flex items-end">
@@ -379,7 +330,7 @@ export function Gallery() {
                               {photo.caption}
                             </p>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -413,11 +364,11 @@ export function Gallery() {
       </div>
 
       {/* Lightbox Modal (Integrated In-Site Modal) */}
-      {activePhoto && (
+        {activePhoto && createPortal((
         <div
           role="dialog"
           aria-modal="true"
-          className="gallery-lightbox fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/92 backdrop-blur-2xl transition-opacity animate-in fade-in"
+          className="gallery-lightbox fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6 bg-black/92 backdrop-blur-2xl transition-opacity animate-in fade-in"
           onClick={() => setActivePhoto(null)}
         >
           {/* Modal Container */}
@@ -464,6 +415,10 @@ export function Gallery() {
               <img
                 src={activePhoto.rawUrl ?? activePhoto.image}
                 alt={activePhoto.title}
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = activePhoto.image;
+                }}
                 className="max-h-[65vh] w-auto max-w-full object-contain rounded-lg"
               />
 
@@ -533,7 +488,7 @@ export function Gallery() {
             </div>
           </div>
         </div>
-      )}
+        ), document.body)}
     </div>
   );
 }
